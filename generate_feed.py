@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime, format_datetime
 
 
-SOURCE = "https://feeds.reuters.com/reuters/worldNews"
+SOURCE = "https://www.reuters.com/world/rss"
 
 headers = {
     "User-Agent": "Mozilla/5.0"
@@ -51,62 +51,41 @@ count = 0
 
 for article in soup.find_all("item"):
 
-    if not article.title or not article.link:
-        continue
-
-
     title = article.title.text.strip()
 
     link = article.link.text.strip()
 
 
-    # Date
-    try:
+    if article.pubDate:
 
-        date = parsedate_to_datetime(
-            article.pubDate.text.strip()
-        )
+        try:
+            date = parsedate_to_datetime(
+                article.pubDate.text.strip()
+            )
 
-    except:
+        except:
+
+            date = datetime.now(
+                timezone.utc
+            )
+
+    else:
 
         date = datetime.now(
             timezone.utc
         )
 
 
-    # Description
     description = ""
 
     if article.description:
 
-        description = article.description.text.strip()
-
-
-    # Try to find image
-    image = None
-
-
-    media = article.find(
-        "media:content"
-    )
-
-    if media:
-
-        image = media.get(
-            "url"
-        )
-
-
-    if image:
-
         description = (
-            f'<img src="{image}"><br><br>'
-            + description
+            article.description.text.strip()
         )
 
 
     item = feed.add_entry()
-
 
     item.title(
         title
@@ -131,7 +110,6 @@ for article in soup.find_all("item"):
 
 
     count += 1
-
 
 
 print(
